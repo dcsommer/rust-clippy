@@ -41,6 +41,7 @@ LL | foobar = 42
            await-holding-invalid-types
            cargo-ignore-publish
            check-grouped-late-init
+           check-in-tests
            check-incompatible-msrv-in-tests
            check-inconsistent-struct-field-initializers
            check-private-items

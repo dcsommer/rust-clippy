@@ -2464,6 +2464,23 @@ pub fn is_in_integration_test_file(sess: &Session) -> bool {
     }
 }
 
+/// Checks if `hir_id` is in test code that `lint` skips.
+///
+/// A lint that ignores test code unconditionally should use this in place of [`is_in_test`], so
+/// that the `check-in-tests` configuration can turn the exemption off. Remember to list the
+/// lint under `check-in-tests` in `clippy_config`, which documents which lints honor it.
+pub fn is_in_exempt_test(tcx: TyCtxt<'_>, lint: &'static Lint, hir_id: HirId) -> bool {
+    !diagnostics::is_checked_in_tests(lint) && is_in_test(tcx, hir_id)
+}
+
+/// Checks if `hir_id` is in a `#[test]` function that `lint` skips.
+///
+/// The [`is_in_test_function`] counterpart of [`is_in_exempt_test`], for lints whose exemption
+/// covers only the test functions themselves and not the rest of a `#[cfg(test)]` item.
+pub fn is_in_exempt_test_function(tcx: TyCtxt<'_>, lint: &'static Lint, hir_id: HirId) -> bool {
+    !diagnostics::is_checked_in_tests(lint) && is_in_test_function(tcx, hir_id)
+}
+
 /// Checks if the item of any of its parents has `#[cfg(...)]` attribute applied.
 pub fn inherits_cfg(tcx: TyCtxt<'_>, def_id: LocalDefId) -> bool {
     find_attr!(tcx, def_id, CfgTrace(..))

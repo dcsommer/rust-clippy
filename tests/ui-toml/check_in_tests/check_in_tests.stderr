@@ -1,0 +1,41 @@
+error: incorrect ordering of items (module item groupings specify another order)
+  --> tests/ui-toml/check_in_tests/check_in_tests.rs:29:5
+   |
+LL | mod tests {
+   |     ^^^^^
+   |
+note: should be placed before `in_test_fn`
+  --> tests/ui-toml/check_in_tests/check_in_tests.rs:16:4
+   |
+LL | fn in_test_fn() {
+   |    ^^^^^^^^^^
+   = note: `-D clippy::arbitrary-source-item-ordering` implied by `-D warnings`
+   = help: to override `-D warnings` add `#[allow(clippy::arbitrary_source_item_ordering)]`
+
+error: equal expressions as operands to `==`
+  --> tests/ui-toml/check_in_tests/check_in_tests.rs:18:13
+   |
+LL |     let _ = 1 + 1 == 1 + 1;
+   |             ^^^^^^^^^^^^^^
+   |
+   = note: `-D clippy::eq-op` implied by `-D warnings`
+   = help: to override `-D warnings` add `#[allow(clippy::eq_op)]`
+
+error: this could be a `const fn`
+  --> tests/ui-toml/check_in_tests/check_in_tests.rs:32:5
+   |
+LL | /     fn helper(x: u32) -> u32 {
+LL | |
+LL | |         x
+LL | |     }
+   | |_____^
+   |
+   = note: `-D clippy::missing-const-for-fn` implied by `-D warnings`
+   = help: to override `-D warnings` add `#[allow(clippy::missing_const_for_fn)]`
+help: make the function `const`
+   |
+LL |     const fn helper(x: u32) -> u32 {
+   |     +++++
+
+error: aborting due to 3 previous errors
+

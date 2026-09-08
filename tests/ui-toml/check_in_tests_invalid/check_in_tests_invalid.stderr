@@ -1,0 +1,31 @@
+error: `dbg_macro` is in both `allow-in-tests` and `check-in-tests`
+  --> $DIR/tests/ui-toml/check_in_tests_invalid/clippy.toml:3:5
+   |
+LL |     "dbg_macro",
+   |     ^^^^^^^^^^^
+   |
+note: also listed here
+  --> $DIR/tests/ui-toml/check_in_tests_invalid/clippy.toml:1:19
+   |
+LL | allow-in-tests = ["dbg_macro"]
+   |                   ^^^^^^^^^^^
+   = help: remove it from one of the two
+
+warning: `unwrap_used` does not skip test code, so listing it has no effect
+  --> $DIR/tests/ui-toml/check_in_tests_invalid/clippy.toml:4:5
+   |
+LL |     "unwrap_used",
+   |     ^^^^^^^^^^^^^
+   |
+   = note: `check-in-tests` only affects these lints: arbitrary_source_item_ordering, assigning_clones, disallowed_names, eq_op, explicit_write, impl_trait_in_params, incompatible_msrv, large_stack_frames, missing_assert_message, missing_const_for_fn, multiple_inherent_impl, single_call_fn, trailing_empty_array, unnecessary_debug_formatting, wildcard_imports
+
+warning: unknown lint: `no_such_lint`
+  --> $DIR/tests/ui-toml/check_in_tests_invalid/clippy.toml:5:5
+   |
+LL |     "no_such_lint",
+   |     ^^^^^^^^^^^^^^
+   |
+   = note: `check-in-tests` only accepts Clippy lints
+
+error: aborting due to 1 previous error; 2 warnings emitted
+

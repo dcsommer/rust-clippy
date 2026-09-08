@@ -1,7 +1,7 @@
 use clippy_config::Conf;
 use clippy_utils::diagnostics::span_lint_and_then;
 use clippy_utils::msrvs::Msrv;
-use clippy_utils::{is_in_const_context, is_in_test, sym};
+use clippy_utils::{is_in_const_context, is_in_exempt_test, sym};
 use rustc_data_structures::fx::FxHashMap;
 use rustc_hir::attrs::RustcVersion;
 use rustc_hir::{self as hir, AmbigArg, Expr, ExprKind, HirId, StabilityLevel, StableSince, find_attr};
@@ -197,7 +197,7 @@ impl IncompatibleMsrv {
         if let Some(current) = self.msrv.current(cx)
             && let Availability::Since(version) = self.get_def_id_availability(cx.tcx, def_id, needs_const)
             && version > current
-            && (self.check_in_tests || !is_in_test(cx.tcx, node))
+            && (self.check_in_tests || !is_in_exempt_test(cx.tcx, INCOMPATIBLE_MSRV, node))
         {
             span_lint_and_then(
                 cx,

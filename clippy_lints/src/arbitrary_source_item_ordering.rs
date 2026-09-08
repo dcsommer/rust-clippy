@@ -4,7 +4,7 @@ use clippy_config::types::{
     SourceItemOrderingTraitAssocItemKind, SourceItemOrderingTraitAssocItemKinds,
     SourceItemOrderingWithinModuleItemGroupings, TraitImplItemOrder,
 };
-use clippy_utils::diagnostics::{ClippyLintContext, span_lint_and_note};
+use clippy_utils::diagnostics::{ClippyLintContext, is_checked_in_tests, span_lint_and_note};
 use clippy_utils::is_cfg_test;
 use rustc_hir::attrs::AttributeKind;
 use rustc_hir::{
@@ -507,7 +507,7 @@ impl<'tcx> LateLintPass<'tcx> for ArbitrarySourceItemOrdering {
         // as no sorting by source map/line of code has to be applied.
         //
         for item in items {
-            if is_cfg_test(cx.tcx, item.hir_id()) {
+            if !is_checked_in_tests(ARBITRARY_SOURCE_ITEM_ORDERING) && is_cfg_test(cx.tcx, item.hir_id()) {
                 continue;
             }
 

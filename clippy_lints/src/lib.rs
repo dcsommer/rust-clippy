@@ -446,11 +446,34 @@ pub fn explain(name: &str) -> i32 {
     }
 }
 
-/// Resolves one lint name from the `allow-in-tests` configuration.
+/// The lints which skip test code of their own accord, and so honor `check-in-tests`.
+///
+/// Kept in step with the calls to [`clippy_utils::is_in_exempt_test`]; listing a lint here that
+/// doesn't consult it would silently do nothing. The `check-in-tests` documentation repeats
+/// this list for users.
+const LINTS_EXEMPT_IN_TESTS: &[&str] = &[
+    "arbitrary_source_item_ordering",
+    "assigning_clones",
+    "disallowed_names",
+    "eq_op",
+    "explicit_write",
+    "impl_trait_in_params",
+    "incompatible_msrv",
+    "large_stack_frames",
+    "missing_assert_message",
+    "missing_const_for_fn",
+    "multiple_inherent_impl",
+    "single_call_fn",
+    "trailing_empty_array",
+    "unnecessary_debug_formatting",
+    "wildcard_imports",
+];
+
+/// Resolves one lint name from `allow-in-tests` or `check-in-tests`.
 ///
 /// Accepts `unwrap_used`, `clippy::unwrap_used` and `unwrap-used` alike. A name which doesn't
 /// refer to a Clippy lint is reported and ignored.
-fn resolve_configured_lint(dcx: DiagCtxtHandle<'_>, name: &Spanned<String>) -> Option<&'static Lint> {
+fn resolve_configured_lint(dcx: DiagCtxtHandle<'_>, option: &str, name: &Spanned<String>) -> Option<&'static Lint> {
     let bare_name = name.node.strip_prefix("clippy::").unwrap_or(&name.node);
     let lint_name = format!("clippy::{}", bare_name.replace('-', "_").to_ascii_uppercase());
 
@@ -459,7 +482,7 @@ fn resolve_configured_lint(dcx: DiagCtxtHandle<'_>, name: &Spanned<String>) -> O
     }
 
     let mut diag = dcx.struct_span_warn(name.span, format!("unknown lint: `{}`", name.node));
-    diag.note("`allow-in-tests` only accepts Clippy lints");
+    diag.note(format!("`{option}` only accepts Clippy lints"));
     let renamed = deprecated_lints::RENAMED
         .iter()
         .find(|(old_name, _)| old_name.eq_ignore_ascii_case(&lint_name));
@@ -483,17 +506,58 @@ fn resolve_configured_lint(dcx: DiagCtxtHandle<'_>, name: &Spanned<String>) -> O
     None
 }
 
-/// Resolves the lint names given in the `allow-in-tests` configuration and hands them to
-/// `clippy_utils`, which drops their diagnostics when they are emitted from test code.
+/// Resolves the lint names given in the `allow-in-tests` and `check-in-tests` configurations
+/// and hands them to `clippy_utils`, which consults them when a diagnostic is emitted from test
+/// code.
 ///
-/// Names which don't refer to a Clippy lint are reported and ignored.
-fn register_lints_allowed_in_tests(dcx: DiagCtxtHandle<'_>, conf: &'static Conf) {
+/// Names which don't resolve, name a lint the option cannot affect, or appear in both options are
+/// reported and ignored.
+fn register_lints_configured_in_tests(dcx: DiagCtxtHandle<'_>, conf: &'static Conf) {
     let allowed: Vec<_> = conf
         .allow_in_tests
         .iter()
-        .filter_map(|name| Some(resolve_configured_lint(dcx, name)?.name))
+        .filter_map(|name| Some((resolve_configured_lint(dcx, "allow-in-tests", name)?, name.span)))
         .collect();
-    clippy_utils::diagnostics::set_lints_allowed_in_tests(allowed);
+
+    let mut disallowed = Vec::with_capacity(conf.check_in_tests.len());
+    for name in &conf.check_in_tests {
+        let Some(lint) = resolve_configured_lint(dcx, "check-in-tests", name) else {
+            continue;
+        };
+
+        // A lint cannot be both suppressed in tests and forced to report there.
+        if let Some(&(_, allow_span)) = allowed.iter().find(|&&(allowed, _)| allowed.name == lint.name) {
+            dcx.struct_span_err(
+                name.span,
+                format!("`{}` is in both `allow-in-tests` and `check-in-tests`", name.node),
+            )
+            .with_span_note(allow_span, "also listed here")
+            .with_help("remove it from one of the two")
+            .emit();
+            continue;
+        }
+
+        // Listing a lint with no exemption to cancel would silently do nothing.
+        let bare_name = lint.name_lower();
+        let bare_name = bare_name.strip_prefix("clippy::").unwrap_or(&bare_name);
+        if !LINTS_EXEMPT_IN_TESTS.contains(&bare_name) {
+            dcx.struct_span_warn(
+                name.span,
+                format!("`{}` does not skip test code, so listing it has no effect", name.node),
+            )
+            .with_note(format!(
+                "`check-in-tests` only affects these lints: {}",
+                LINTS_EXEMPT_IN_TESTS.join(", "),
+            ))
+            .emit();
+            continue;
+        }
+
+        disallowed.push(lint.name);
+    }
+
+    clippy_utils::diagnostics::set_lints_allowed_in_tests(allowed.into_iter().map(|(lint, _)| lint.name));
+    clippy_utils::diagnostics::set_lints_checked_in_tests(disallowed);
 }
 
 /// The names of all Clippy lints, without the `clippy::` prefix, for use in suggestions.
@@ -508,7 +572,7 @@ fn lint_symbols() -> Vec<Symbol> {
 ///
 /// Used in `./src/driver.rs`.
 pub fn register_lint_passes(dcx: DiagCtxtHandle<'_>, store: &mut rustc_lint::LintStore, conf: &'static Conf) {
-    register_lints_allowed_in_tests(dcx, conf);
+    register_lints_configured_in_tests(dcx, conf);
 
     for (old_name, new_name) in deprecated_lints::RENAMED {
         store.register_renamed(old_name, new_name);

@@ -1,6 +1,6 @@
 use clippy_config::Conf;
 use clippy_config::types::InherentImplLintScope;
-use clippy_utils::diagnostics::span_lint_and_then;
+use clippy_utils::diagnostics::{is_checked_in_tests, span_lint_and_then};
 use clippy_utils::{fulfill_or_allowed, is_cfg_test, is_in_cfg_test};
 use rustc_data_structures::fx::FxHashMap;
 use rustc_hir::def_id::{LocalDefId, LocalModId};
@@ -99,7 +99,8 @@ impl<'tcx> LateLintPass<'tcx> for MultipleInherentImpl {
                     },
                     InherentImplLintScope::Crate => Criterion::Crate,
                 };
-                let is_test = is_cfg_test(cx.tcx, hir_id) || is_in_cfg_test(cx.tcx, hir_id);
+                let is_test = !is_checked_in_tests(MULTIPLE_INHERENT_IMPL)
+                    && (is_cfg_test(cx.tcx, hir_id) || is_in_cfg_test(cx.tcx, hir_id));
                 let clauses = {
                     // Gets the clauses (bounds) for the given impl block,
                     // sorted for consistent comparison to allow distinguishing between impl blocks
