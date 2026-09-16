@@ -1,6 +1,6 @@
 use clippy_config::Conf;
 use clippy_utils::diagnostics::span_lint_hir_and_then;
-use clippy_utils::{is_from_proc_macro, is_in_test_function};
+use clippy_utils::{is_from_proc_macro, is_in_exempt_test_function};
 use rustc_data_structures::fx::{FxIndexMap, IndexEntry};
 use rustc_hir::def::DefKind;
 use rustc_hir::def_id::LocalDefId;
@@ -91,7 +91,7 @@ impl SingleCallFn {
             || cx
                 .tcx
                 .hir_maybe_body_owned_by(fn_def_id)
-                .is_none_or(|body| is_in_test_function(cx.tcx, body.value.hir_id))
+                .is_none_or(|body| is_in_exempt_test_function(cx.tcx, SINGLE_CALL_FN, body.value.hir_id))
             || match cx.tcx.hir_node(fn_hir_id) {
                 Node::Item(item) => is_from_proc_macro(cx, item),
                 Node::ImplItem(item) => is_from_proc_macro(cx, item),

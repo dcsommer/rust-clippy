@@ -1,0 +1,6 @@
+allow-in-tests = ["dbg_macro"]
+check-in-tests = [
+    "dbg_macro",
+    "unwrap_used",
+    "no_such_lint",
+]

@@ -1,7 +1,7 @@
 use clippy_utils::ast_utils::is_useless_with_eq_exprs;
 use clippy_utils::diagnostics::{span_lint, span_lint_and_then};
 use clippy_utils::macros::{find_assert_eq_args, first_node_macro_backtrace};
-use clippy_utils::{eq_expr_value, is_in_test_function, sym};
+use clippy_utils::{eq_expr_value, is_in_exempt_test_function, sym};
 use rustc_hir::{BinOpKind, Expr};
 use rustc_lint::LateContext;
 
@@ -16,7 +16,7 @@ pub(crate) fn check_assert<'tcx>(cx: &LateContext<'tcx>, e: &'tcx Expr<'_>) {
     }) && let Some((lhs, rhs, _)) = find_assert_eq_args(cx, e, macro_call.expn)
         && eq_expr_value(cx, macro_call.span.ctxt(), lhs, rhs)
         && macro_call.is_local()
-        && !is_in_test_function(cx.tcx, e.hir_id)
+        && !is_in_exempt_test_function(cx.tcx, EQ_OP, e.hir_id)
     {
         span_lint(
             cx,
@@ -39,7 +39,7 @@ pub(crate) fn check<'tcx>(
 ) {
     if is_useless_with_eq_exprs(op)
         && eq_expr_value(cx, e.span.ctxt(), left, right)
-        && !is_in_test_function(cx.tcx, e.hir_id)
+        && !is_in_exempt_test_function(cx.tcx, EQ_OP, e.hir_id)
     {
         span_lint_and_then(
             cx,

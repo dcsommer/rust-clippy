@@ -141,8 +141,8 @@ listing here.
 
 #### Noteworthy
 
-- This only suppresses lints. It cannot make a lint fire in test code that would not
-  fire otherwise.
+- This only suppresses lints. It cannot make a lint fire in test code that would not fire
+  otherwise; see [`check-in-tests`](#check-in-tests) for that.
 - Suppressing a lint leaves an `#[expect]` for it in test code unfulfilled, so such an
   attribute will report `unfulfilled_lint_expectations`. This matches how the older
   per-lint options have always behaved.
@@ -165,6 +165,10 @@ Deprecated in favor of [`allow-in-tests`](#allow-in-tests): write
 
 ## `allow-large-stack-frames-in-tests`
 Whether functions inside `#[cfg(test)]` modules or test functions should be checked.
+
+Deprecated in favor of [`check-in-tests`](#check-in-tests): setting this to `false`
+is the same as writing `check-in-tests = ["large_stack_frames"]`. This option still
+works.
 
 **Default Value:** `true`
 
@@ -547,8 +551,51 @@ let (a, b) = if true {
 * [`needless_late_init`](https://rust-lang.github.io/rust-clippy/main/index.html#needless_late_init)
 
 
+## `check-in-tests`
+A list of Clippy lints to report in test functions and `#[cfg(test)]` items even though
+they would normally skip them.
+
+A number of lints ignore test code unconditionally, on the grounds that the pattern they
+flag is usually fine in a test. Listing such a lint here turns that exemption off. This is
+the inverse of [`allow-in-tests`](#allow-in-tests), and a lint may not appear in both.
+
+Entries are **lint names**, and only the lints named here are affected.
+
+```toml
+# Report `missing_const_for_fn` in test code too, where it is normally skipped.
+check-in-tests = ["missing_const_for_fn"]
+```
+
+#### Replaces the per-lint options
+
+Two older options point this way. They are deprecated but still honored:
+
+| deprecated option | write instead |
+| --- | --- |
+| `allow-large-stack-frames-in-tests = false` | `check-in-tests = ["large_stack_frames"]` |
+| `check-incompatible-msrv-in-tests = true` | `check-in-tests = ["incompatible_msrv"]` |
+
+#### Noteworthy
+
+- This only applies to lints that skip test code of their own accord. It cannot make a
+  lint fire where it otherwise would not, and listing a lint without a test exemption
+  warns rather than doing nothing silently.
+- The lints with a test exemption are `arbitrary_source_item_ordering`,
+  `assigning_clones`, `disallowed_names`, `eq_op`, `explicit_write`,
+  `impl_trait_in_params`, `incompatible_msrv`, `large_stack_frames`,
+  `missing_assert_message`, `missing_const_for_fn`, `multiple_inherent_impl`,
+  `single_call_fn`, `trailing_empty_array`, `unnecessary_debug_formatting` and
+  `wildcard_imports`.
+
+**Default Value:** `[]`
+
+
 ## `check-incompatible-msrv-in-tests`
 Whether to check MSRV compatibility in `#[test]` and `#[cfg(test)]` code.
+
+Deprecated in favor of [`check-in-tests`](#check-in-tests): setting this to `true`
+is the same as writing `check-in-tests = ["incompatible_msrv"]`. This option still
+works.
 
 **Default Value:** `false`
 

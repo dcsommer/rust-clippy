@@ -3,7 +3,7 @@ use std::{fmt, ops};
 use clippy_config::Conf;
 use clippy_utils::diagnostics::span_lint_and_then;
 use clippy_utils::source::SpanExt as _;
-use clippy_utils::{fn_has_unsatisfiable_clauses, is_entrypoint_fn, is_in_test};
+use clippy_utils::{fn_has_unsatisfiable_clauses, is_entrypoint_fn, is_in_exempt_test};
 use rustc_errors::Diag;
 use rustc_hir::def_id::LocalDefId;
 use rustc_hir::intravisit::FnKind;
@@ -178,8 +178,8 @@ impl<'tcx> LateLintPass<'tcx> for LargeStackFrames {
             };
 
             // Don't lint inside tests if configured to not do so.
-            if self.allow_large_stack_frames_in_tests && is_in_test(cx.tcx, cx.tcx.local_def_id_to_hir_id(local_def_id))
-            {
+            let hir_id = cx.tcx.local_def_id_to_hir_id(local_def_id);
+            if self.allow_large_stack_frames_in_tests && is_in_exempt_test(cx.tcx, LARGE_STACK_FRAMES, hir_id) {
                 return;
             }
 

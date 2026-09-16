@@ -317,8 +317,8 @@ define_Conf! {
     ///
     /// #### Noteworthy
     ///
-    /// - This only suppresses lints. It cannot make a lint fire in test code that would not
-    ///   fire otherwise.
+    /// - This only suppresses lints. It cannot make a lint fire in test code that would not fire
+    ///   otherwise; see [`check-in-tests`](#check-in-tests) for that.
     /// - Suppressing a lint leaves an `#[expect]` for it in test code unfulfilled, so such an
     ///   attribute will report `unfulfilled_lint_expectations`. This matches how the older
     ///   per-lint options have always behaved.
@@ -331,6 +331,10 @@ define_Conf! {
     #[lints(indexing_slicing)]
     allow_indexing_slicing_in_tests("allow-indexing-slicing-in-tests"): bool = false,
     /// Whether functions inside `#[cfg(test)]` modules or test functions should be checked.
+    ///
+    /// Deprecated in favor of [`check-in-tests`](#check-in-tests): setting this to `false`
+    /// is the same as writing `check-in-tests = ["large_stack_frames"]`. This option still
+    /// works.
     #[lints(large_stack_frames)]
     allow_large_stack_frames_in_tests("allow-large-stack-frames-in-tests"): bool = true,
     /// Whether to allow mixed uninlined format args, e.g. `format!("{} {}", a, foo.bar)`
@@ -544,7 +548,46 @@ define_Conf! {
     /// ```
     #[lints(needless_late_init)]
     check_grouped_late_init("check-grouped-late-init"): bool = true,
+    /// A list of Clippy lints to report in test functions and `#[cfg(test)]` items even though
+    /// they would normally skip them.
+    ///
+    /// A number of lints ignore test code unconditionally, on the grounds that the pattern they
+    /// flag is usually fine in a test. Listing such a lint here turns that exemption off. This is
+    /// the inverse of [`allow-in-tests`](#allow-in-tests), and a lint may not appear in both.
+    ///
+    /// Entries are **lint names**, and only the lints named here are affected.
+    ///
+    /// ```toml
+    /// # Report `missing_const_for_fn` in test code too, where it is normally skipped.
+    /// check-in-tests = ["missing_const_for_fn"]
+    /// ```
+    ///
+    /// #### Replaces the per-lint options
+    ///
+    /// Two older options point this way. They are deprecated but still honored:
+    ///
+    /// | deprecated option | write instead |
+    /// | --- | --- |
+    /// | `allow-large-stack-frames-in-tests = false` | `check-in-tests = ["large_stack_frames"]` |
+    /// | `check-incompatible-msrv-in-tests = true` | `check-in-tests = ["incompatible_msrv"]` |
+    ///
+    /// #### Noteworthy
+    ///
+    /// - This only applies to lints that skip test code of their own accord. It cannot make a
+    ///   lint fire where it otherwise would not, and listing a lint without a test exemption
+    ///   warns rather than doing nothing silently.
+    /// - The lints with a test exemption are `arbitrary_source_item_ordering`,
+    ///   `assigning_clones`, `disallowed_names`, `eq_op`, `explicit_write`,
+    ///   `impl_trait_in_params`, `incompatible_msrv`, `large_stack_frames`,
+    ///   `missing_assert_message`, `missing_const_for_fn`, `multiple_inherent_impl`,
+    ///   `single_call_fn`, `trailing_empty_array`, `unnecessary_debug_formatting` and
+    ///   `wildcard_imports`.
+    check_in_tests("check-in-tests"): Vec<Spanned<String>>,
     /// Whether to check MSRV compatibility in `#[test]` and `#[cfg(test)]` code.
+    ///
+    /// Deprecated in favor of [`check-in-tests`](#check-in-tests): setting this to `true`
+    /// is the same as writing `check-in-tests = ["incompatible_msrv"]`. This option still
+    /// works.
     #[lints(incompatible_msrv)]
     check_incompatible_msrv_in_tests("check-incompatible-msrv-in-tests"): bool = false,
     /// Whether to suggest reordering constructor fields when initializers are present.

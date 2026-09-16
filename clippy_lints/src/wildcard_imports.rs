@@ -1,6 +1,6 @@
 use clippy_config::Conf;
 use clippy_utils::diagnostics::span_lint_and_sugg;
-use clippy_utils::is_in_test;
+use clippy_utils::is_in_exempt_test;
 use clippy_utils::source::{snippet, snippet_with_applicability};
 use rustc_data_structures::fx::FxHashSet;
 use rustc_errors::Applicability;
@@ -183,7 +183,7 @@ impl WildcardImports {
         item.span.from_expansion()
             || is_prelude_import(segments)
             || is_allowed_via_config(segments, self.allowed_segments)
-            || (is_super_only_import(segments) && is_in_test(cx.tcx, item.hir_id()))
+            || (is_super_only_import(segments) && is_in_exempt_test(cx.tcx, WILDCARD_IMPORTS, item.hir_id()))
     }
 }
 

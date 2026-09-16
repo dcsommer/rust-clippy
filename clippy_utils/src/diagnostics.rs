@@ -38,6 +38,27 @@ fn is_allowed_in_tests(lint: &'static Lint) -> bool {
         .is_some_and(|lints| !lints.is_empty() && lints.contains(lint.name))
 }
 
+/// The lints which the `check-in-tests` configuration reports in test code despite their
+/// built-in test exemption, stored as [`Lint::name`] values.
+static CHECKED_IN_TESTS: OnceLock<FxHashSet<&'static str>> = OnceLock::new();
+
+/// Sets the lints which the `check-in-tests` configuration reports in test code.
+///
+/// This must be called before any lint pass runs; only the first call has an effect.
+pub fn set_lints_checked_in_tests(lints: impl IntoIterator<Item = &'static str>) {
+    let _ = CHECKED_IN_TESTS.set(lints.into_iter().collect());
+}
+
+/// Whether `check-in-tests` cancels `lint`'s built-in exemption for test code.
+///
+/// Lints that skip test code of their own accord should consult this, most easily via
+/// [`crate::is_in_exempt_test`].
+pub fn is_checked_in_tests(lint: &'static Lint) -> bool {
+    CHECKED_IN_TESTS
+        .get()
+        .is_some_and(|lints| !lints.is_empty() && lints.contains(lint.name))
+}
+
 /// Whether `allow-in-tests` names any lint at all.
 ///
 /// Lets the work behind [`set_test_code_spans`] be skipped entirely when the option is unset,

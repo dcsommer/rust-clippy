@@ -12,7 +12,7 @@ use clippy_utils::msrvs::{self, Msrv};
 use clippy_utils::res::MaybeDef as _;
 use clippy_utils::source::{SpanExt as _, snippet, snippet_opt};
 use clippy_utils::ty::implements_trait;
-use clippy_utils::{is_from_proc_macro, is_in_test, peel_hir_expr_while, sym, trait_ref_of_method};
+use clippy_utils::{is_from_proc_macro, is_in_exempt_test, peel_hir_expr_while, sym, trait_ref_of_method};
 use itertools::Itertools as _;
 use rustc_ast::FormatTrait::{Binary, Debug, Display, LowerExp, LowerHex, Octal, Pointer, UpperExp, UpperHex};
 use rustc_ast::{
@@ -728,7 +728,7 @@ impl<'tcx> FormatArgsExpr<'_, 'tcx> {
 
     fn check_unnecessary_debug_formatting(&self, name: Symbol, value: &Expr<'tcx>) {
         let cx = self.cx;
-        if !is_in_test(cx.tcx, value.hir_id)
+        if !is_in_exempt_test(cx.tcx, UNNECESSARY_DEBUG_FORMATTING, value.hir_id)
             && !value.span.from_expansion()
             && !is_from_proc_macro(cx, value)
             && let ty = cx.typeck_results().expr_ty(value)

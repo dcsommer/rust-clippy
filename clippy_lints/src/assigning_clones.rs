@@ -4,7 +4,7 @@ use clippy_utils::mir::{PossibleBorrowerMap, enclosing_mir};
 use clippy_utils::msrvs::{self, Msrv};
 use clippy_utils::res::{MaybeDef as _, MaybeResPath as _};
 use clippy_utils::sugg::Sugg;
-use clippy_utils::{is_in_test, last_path_segment, local_is_initialized, sym};
+use clippy_utils::{is_in_exempt_test, last_path_segment, local_is_initialized, sym};
 use rustc_errors::Applicability;
 use rustc_hir::{self as hir, Expr, ExprKind};
 use rustc_lint::{LateContext, LateLintPass, impl_lint_pass};
@@ -115,7 +115,7 @@ impl<'tcx> LateLintPass<'tcx> for AssigningClones {
                 }
             )
             && !clone_source_borrows_from_dest(cx, lhs, rhs.span)
-            && !is_in_test(cx.tcx, e.hir_id)
+            && !is_in_exempt_test(cx.tcx, ASSIGNING_CLONES, e.hir_id)
         {
             span_lint_and_then(
                 cx,

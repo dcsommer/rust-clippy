@@ -3,7 +3,7 @@ use clippy_utils::diagnostics::span_lint_and_then;
 use clippy_utils::msrvs::{self, Msrv};
 use clippy_utils::qualify_min_const_fn::is_min_const_fn;
 use clippy_utils::{
-    fn_has_unsatisfiable_clauses, is_entrypoint_fn, is_from_proc_macro, is_in_test, trait_ref_of_method,
+    fn_has_unsatisfiable_clauses, is_entrypoint_fn, is_from_proc_macro, is_in_exempt_test, trait_ref_of_method,
 };
 use rustc_abi::ExternAbi;
 use rustc_errors::Applicability;
@@ -96,7 +96,7 @@ impl<'tcx> LateLintPass<'tcx> for MissingConstForFn {
         def_id: LocalDefId,
     ) {
         let hir_id = cx.tcx.local_def_id_to_hir_id(def_id);
-        if is_in_test(cx.tcx, hir_id) {
+        if is_in_exempt_test(cx.tcx, MISSING_CONST_FOR_FN, hir_id) {
             return;
         }
 
